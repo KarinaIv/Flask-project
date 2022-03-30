@@ -1,6 +1,8 @@
 from flask import Flask
 
 app = Flask(__name__)
+print('ok')
+
 app.config['SECRET_KEY'] = 'yandexlyceum_secret_key'
 
 
