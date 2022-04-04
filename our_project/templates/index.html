@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>Товары</h1>
+
+{% if not current_user.is_authenticated%}
+<p>Чтобы быть покупателем и продавцом, авторизуйтесь!</p>
+{% endif %}
+{% if current_user.is_authenticated %}
+    <a href="products" class="btn btn-secondary">Добавить товар</a>
+{% endif %}
+{% for item in products%}
+    <div class="col-md6 border rounded">
+        <h2>{{item.title}}</h2>
+        <div>
+            {{item.content}}
+        </div>
+        <div>
+            Продавец - {{item.user.name}}
+        </div>
+        <div>
+            Цена - {{item.price}}
+        </div>
+    {% if current_user.is_authenticated%}
+    <div>
+        <a href="/likes" class="btn btn-info">
+            Добавить в избранное
+        </a>
+        <a href="/shop_cart" class="btn btn-success">
+            Добавить в корзину
+        </a>
+    </div>
+    {% endif %}
+    </div>
+    {% if current_user.is_authenticated and current_user == item.user %}
+    <div>
+        <a href="/products/{{ item.id }}" class="btn btn-warning">
+            Изменить
+        </a>
+        <a href="/products_delete/{{ item.id }}" class="btn btn-danger">
+            Удалить
+        </a>
+    </div>
+    {% endif %}
+{% endfor %}
+{% endblock %}
