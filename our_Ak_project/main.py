@@ -39,7 +39,8 @@ login_manager.init_app(app)
 @app.route("/")
 def index():
     db_sess = db_session.create_session()
-    products = db_sess.query(Products)
+    products = list(db_sess.query(Products))
+    products = [products[i:i + 2] for i in range(0, len(products), 2)]
     return render_template("index.html", products=products)
 
 @app.route('/register', methods=['GET', 'POST'])
