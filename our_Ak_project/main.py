@@ -36,6 +36,11 @@ login_manager = LoginManager()
 login_manager.init_app(app)
 
 
+@app.errorhandler(404)
+def error_404(err):
+	print(err)
+	return render_template('404.html')
+
 @app.route("/")
 def index():
     db_sess = db_session.create_session()
