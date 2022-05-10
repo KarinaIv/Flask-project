@@ -12,8 +12,8 @@ class likes(SqlAlchemyBase):
                            primary_key=True, autoincrement=True)
 
     id_products = sqlalchemy.Column(sqlalchemy.Integer, nullable=False)
-    cnt = sqlalchemy.Column(sqlalchemy.Integer, nullable=False)
-    cart_or_likes = sqlalchemy.Column(sqlalchemy.Integer, nullable=False)
+    # cnt = sqlalchemy.Column(sqlalchemy.Integer, nullable=False)
+    # cart_or_likes = sqlalchemy.Column(sqlalchemy.Integer, nullable=False)
 
 
     user_id = sqlalchemy.Column(sqlalchemy.Integer,
