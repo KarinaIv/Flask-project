@@ -1,3 +1,4 @@
+
 from flask_wtf import FlaskForm
 from wtforms import StringField, TextAreaField, FileField
 from wtforms import BooleanField, SubmitField
@@ -9,5 +10,5 @@ class ProductsForm(FlaskForm):
     title = StringField('Название товара', validators=[DataRequired()])
     content = TextAreaField("Описание товара")
     price = FloatField('Цена товара', validators=[DataRequired()])
-    image = FileField('Изображение товара', validators=[DataRequired()])
+    image = FileField('Изображение товара')
     submit = SubmitField('Применить')
