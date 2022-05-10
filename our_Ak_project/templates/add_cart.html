@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+     <link rel="stylesheet"
+          href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+          integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh"
+          crossorigin="anonymous">
+  <title>Добавление в корзину </title>
+</head>
+<body>
+
+<form action="" method="post" enctype="multipart/form-data">
+{% for item in products %}
+<h2>Добавление в корзину - {{item.title}}</h2>
+     <div class="col-md6 border rounded">
+            {{item.content}}
+        </div>
+        <div>
+            Продавец - {{item.user.name}}
+        </div>
+        <div>
+            Цена - {{item.price}}
+        </div>
+    <p>{{ form.csrf_token }}</p>
+    {% endfor %}
+
+    <p>
+        {{ form.cnt.label }}<br>
+        {{ form.cnt(class="form-control") }}<br>
+        {% for error in form.cnt.errors %}
+            <p class="alert alert-danger" role="alert">
+                {{ error }}
+            </p>
+        {% endfor %}
+    </p>
+<p>{{ form.submit(type="submit", class="btn btn-primary") }}</p>
+    {{message}}
+
+</form>
+</body>
+</html>

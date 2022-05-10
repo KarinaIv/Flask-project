@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>Понравившиеся товары</h1>
+
+<a href="/" class="btn btn-info" style="margin-top: 2%">
+    Вернуться в главное меню </a>
+{% if likes_pr %}
+{% for item in likes_pr %}
+    <div class="col-md6 border rounded">
+        <h2>{{item.products.title}}</h2>
+        <div>
+            {{item.products.content}}
+        </div>
+        <div>
+            Продавец - {{item.user.name}}
+        </div>
+        <div>
+            Цена - {{item.products.price}}
+        </div>
+        <div>
+            <img src=static/img/{{item.products.image}} alt="альтернативный текст">
+        </div>
+        <a class="btn btn-info" href="/delete_likes/{{ item.id }}">
+            Убрать из избранного </a>
+    </div>
+{% endfor %}
+{% else %}
+<p style="margin-top: 3%">
+<font size="6" color="47a76a" face="Canada">Вы ещё не добавили товары в избранное. Перейдите на главную страницу, чтобы сделать это!</font>
+</p>
+<div>
+    <p class="fig"><img src=static/img/cat_likes.jpg alt="альтернативный текст"></p>
+</div>
+<style>
+   .fig {
+    text-align: right;
+   }
+  </style>
+{% endif %}
+{% endblock %}
