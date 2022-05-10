@@ -6,24 +6,24 @@ from forms.user import RegisterForm
 from forms.products import ProductsForm
 from static import img
 from PIL import Image
-
+from sqlalchemy import insert
 from flask import send_from_directory
 from os import path
 import os
-
 from data.users import User
 from data.products import Products
 import datetime
-
+from data.likes import Likes
+from data.cart import Cart
 from werkzeug.utils import secure_filename
-
 from flask_login import LoginManager
+from forms.add_cart import AddCart
+
 
 # папка для сохранения загруженных файлов
 UPLOAD_FOLDER = 'static/img/'
 # расширения файлов, которые разрешено загружать
 ALLOWED_EXTENSIONS = {'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif', 'JPG'}
-
 
 app = Flask(__name__)
 
@@ -36,17 +36,23 @@ login_manager = LoginManager()
 login_manager.init_app(app)
 
 
+@app.route('/order')
+def order():
+    return render_template('order.html')
+
+
 @app.errorhandler(404)
 def error_404(err):
-	print(err)
-	return render_template('404.html')
+    print(err)
+    return render_template('404.html')
+
 
 @app.route("/")
 def index():
     db_sess = db_session.create_session()
     products = list(db_sess.query(Products))
-    products = [products[i:i + 2] for i in range(0, len(products), 2)]
     return render_template("index.html", products=products)
+
 
 @app.route('/register', methods=['GET', 'POST'])
 def reqister():
@@ -61,11 +67,7 @@ def reqister():
             return render_template('register.html', title='Регистрация',
                                    form=form,
                                    message="Такой пользователь уже есть")
-        user = User(
-            name=form.name.data,
-            email=form.email.data,
-            about=form.about.data
-        )
+        user = User(name=form.name.data, email=form.email.data, about=form.about.data)
         user.set_password(form.password.data)
         db_sess.add(user)
         db_sess.commit()
@@ -87,6 +89,7 @@ def login():
                                form=form)
     return render_template('login.html', title='Авторизация', form=form)
 
+
 @login_manager.user_loader
 def load_user(user_id):
     db_sess = db_session.create_session()
@@ -99,17 +102,16 @@ def logout():
     logout_user()
     return redirect("/")
 
-@app.route('/photo',  methods=['GET', 'POST'])
 
+@app.route('/photo',  methods=['GET', 'POST'])
 def photo():
     f = request.files['file']
-    #amg = f.read()
     return f.read()
+
 
 @app.route('/products',  methods=['GET', 'POST'])
 @login_required
 def add_products():
-    #f = request.files['file']
     form = ProductsForm()
     if form.validate_on_submit():
         db_sess = db_session.create_session()
@@ -117,17 +119,14 @@ def add_products():
         products.title = form.title.data
         products.content = form.content.data
         products.price = form.price.data
-        print(request.files)
         if 'image' not in request.files:
             return redirect(request.url)
 
         file = request.files['image']
-        print(file)
         if file.filename == '':
             return redirect(request.url)
         if file and allowed_file(file.filename):
             filename = secure_filename(file.filename)
-            print(filename)
 
             width = 128
             height = 128
@@ -145,15 +144,14 @@ def add_products():
     return render_template('products.html', title='Добавление товара',
                            form=form)
 
+
 @app.route('/products/<int:id>', methods=['GET', 'POST'])
 @login_required
 def edit_products(id):
     form = ProductsForm()
     if request.method == "GET":
         db_sess = db_session.create_session()
-        products = db_sess.query(Products).filter(Products.id == id,
-                                          Products.user == current_user
-                                          ).first()
+        products = db_sess.query(Products).filter(Products.id == id, Products.user == current_user).first()
         if products:
             form.title.data = products.title
             form.content.data = products.content
@@ -163,9 +161,7 @@ def edit_products(id):
             abort(404)
     if form.validate_on_submit():
         db_sess = db_session.create_session()
-        products = db_sess.query(Products).filter(Products.id == id,
-                                          Products.user == current_user
-                                          ).first()
+        products = db_sess.query(Products).filter(Products.id == id, Products.user == current_user).first()
         if products:
             products.title = form.title.data
             products.content = form.content.data
@@ -174,12 +170,10 @@ def edit_products(id):
                 return redirect(request.url)
 
             file = request.files['image']
-            print(file)
             if file.filename == '':
                 return redirect(request.url)
             if file and allowed_file(file.filename):
                 filename = secure_filename(file.filename)
-                print(filename)
 
                 width = 128
                 height = 128
@@ -189,7 +183,6 @@ def edit_products(id):
                 resized_img = img.resize((width, height), Image.ANTIALIAS)
                 resized_img.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
                 products.image = filename
-        #    products.image = form.image.data
             db_sess.commit()
             return redirect('/')
         else:
@@ -199,19 +192,19 @@ def edit_products(id):
                            form=form
                            )
 
+
 @app.route('/products_delete/<int:id>', methods=['GET', 'POST'])
 @login_required
 def products_delete(id):
     db_sess = db_session.create_session()
-    products = db_sess.query(Products).filter(Products.id == id,
-                                      Products.user == current_user
-                                      ).first()
+    products = db_sess.query(Products).filter(Products.id == id, Products.user == current_user).first()
     if products:
         db_sess.delete(products)
         db_sess.commit()
     else:
         abort(404)
     return redirect('/')
+
 
 def allowed_file(filename):
     """ Функция проверки расширения файла """
@@ -220,12 +213,77 @@ def allowed_file(filename):
 
 
 @app.route('/likes', methods=['GET', 'POST'])
+@login_required
 def likes():
-    pass
+    db_sess = db_session.create_session()
+    like = list(db_sess.query(Likes).filter(Likes.user_id == current_user.id))
+    return render_template("likes.html", likes_pr=like)
+
+
+@app.route('/add_likes/<int:id>', methods=['GET', 'POST'])
+@login_required
+def add_likes(id):
+    db_sess = db_session.create_session()
+    like = Likes(id_products=id, user_id=current_user.id)
+    db_sess.add(like)
+    db_sess.commit()
+    return redirect('/')
+
 
 @app.route('/shop_cart', methods=['GET', 'POST'])
+@login_required
 def shop_cart():
-    pass
+    db_sess = db_session.create_session()
+    carts = list(db_sess.query(Cart).filter(Cart.user_id == current_user.id))
+    s = 0
+    c = 0
+    for i in range(len(carts)):
+        s = s + (carts[i].products.price * carts[i].cnt)
+        c += carts[i].cnt
+    return render_template("cart.html", cart_pr=carts, summ=s, col=c)
+
+
+@app.route('/add_shop_cart/<int:id>', methods=['GET', 'POST'])
+@login_required
+def add_shop_cart(id):
+    db_sess = db_session.create_session()
+    products = db_sess.query(Products).filter(Products.id == id)
+
+    form = AddCart()
+    if form.validate_on_submit():
+        db_sess = db_session.create_session()
+
+        if form.cnt.data > 0:
+            cnt = form.cnt.data
+        else:
+            cnt = -form.cnt.data
+
+        cart = Cart(id_products=id, cnt=cnt, user_id=current_user.id)
+        db_sess.add(cart)
+        db_sess.commit()
+        return redirect('/')
+    return render_template("add_cart.html", form=form, products=products)
+
+
+@app.route('/delete_likes/<int:id>', methods=['GET', 'POST'])
+@login_required
+def delete_likes(id):
+    db_sess = db_session.create_session()
+    like = db_sess.query(Likes).filter(Likes.id == id, Likes.user_id == current_user.id).first()
+    db_sess.delete(like)
+    db_sess.commit()
+
+    return redirect('/likes')
+
+
+@app.route('/delete_shop_cart/<int:id>', methods=['GET', 'POST'])
+@login_required
+def delete_cart(id):
+    db_sess = db_session.create_session()
+    carts = db_sess.query(Cart).filter(Cart.id == id, Cart.user_id == current_user.id).first()
+    db_sess.delete(carts)
+    db_sess.commit()
+    return redirect('/shop_cart')
 
 
 def main():
