@@ -38,17 +38,20 @@ login_manager.init_app(app)
 
 @app.route('/order')
 def order():
+    '''покупка товара'''
     return render_template('order.html')
 
 
 @app.errorhandler(404)
 def error_404(err):
+    '''Красивая ошибка 404'''
     print(err)
     return render_template('404.html')
 
 
 @app.route("/")
 def index():
+    '''показ продуктов на главной странице'''
     db_sess = db_session.create_session()
     products = list(db_sess.query(Products))
     return render_template("index.html", products=products)
@@ -56,6 +59,7 @@ def index():
 
 @app.route('/register', methods=['GET', 'POST'])
 def reqister():
+    '''регистрация пользователя '''
     form = RegisterForm()
     if form.validate_on_submit():
         if form.password.data != form.password_again.data:
@@ -77,6 +81,7 @@ def reqister():
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
+    '''вход пользователя в систему'''
     form = LoginForm()
     if form.validate_on_submit():
         db_sess = db_session.create_session()
@@ -92,6 +97,7 @@ def login():
 
 @login_manager.user_loader
 def load_user(user_id):
+    '''загрузка пользователя со стороны сайта (в базу данных)'''
     db_sess = db_session.create_session()
     return db_sess.query(User).get(user_id)
 
@@ -99,12 +105,14 @@ def load_user(user_id):
 @app.route('/logout')
 @login_required
 def logout():
+    '''выход из системы'''
     logout_user()
     return redirect("/")
 
 
 @app.route('/photo',  methods=['GET', 'POST'])
 def photo():
+    '''фотографии к продуктам'''
     f = request.files['file']
     return f.read()
 
@@ -112,6 +120,7 @@ def photo():
 @app.route('/products',  methods=['GET', 'POST'])
 @login_required
 def add_products():
+    '''добавить продукт'''
     form = ProductsForm()
     if form.validate_on_submit():
         db_sess = db_session.create_session()
@@ -148,6 +157,7 @@ def add_products():
 @app.route('/products/<int:id>', methods=['GET', 'POST'])
 @login_required
 def edit_products(id):
+    '''изменить добавленный продукт'''
     form = ProductsForm()
     if request.method == "GET":
         db_sess = db_session.create_session()
@@ -196,6 +206,7 @@ def edit_products(id):
 @app.route('/products_delete/<int:id>', methods=['GET', 'POST'])
 @login_required
 def products_delete(id):
+    '''удалить добавленный продукт'''
     db_sess = db_session.create_session()
     products = db_sess.query(Products).filter(Products.id == id, Products.user == current_user).first()
     if products:
@@ -215,6 +226,7 @@ def allowed_file(filename):
 @app.route('/likes', methods=['GET', 'POST'])
 @login_required
 def likes():
+    '''страница понравившихся товаров'''
     db_sess = db_session.create_session()
     like = list(db_sess.query(Likes).filter(Likes.user_id == current_user.id))
     return render_template("likes.html", likes_pr=like)
@@ -223,6 +235,7 @@ def likes():
 @app.route('/add_likes/<int:id>', methods=['GET', 'POST'])
 @login_required
 def add_likes(id):
+    '''добавить товар в понравившиеся'''
     db_sess = db_session.create_session()
     like = Likes(id_products=id, user_id=current_user.id)
     db_sess.add(like)
@@ -233,6 +246,7 @@ def add_likes(id):
 @app.route('/shop_cart', methods=['GET', 'POST'])
 @login_required
 def shop_cart():
+    ''' страница корзины'''
     db_sess = db_session.create_session()
     carts = list(db_sess.query(Cart).filter(Cart.user_id == current_user.id))
     s = 0
@@ -246,6 +260,7 @@ def shop_cart():
 @app.route('/add_shop_cart/<int:id>', methods=['GET', 'POST'])
 @login_required
 def add_shop_cart(id):
+    '''добавить товар в корзину'''
     db_sess = db_session.create_session()
     products = db_sess.query(Products).filter(Products.id == id)
 
@@ -268,6 +283,7 @@ def add_shop_cart(id):
 @app.route('/delete_likes/<int:id>', methods=['GET', 'POST'])
 @login_required
 def delete_likes(id):
+    ''' удалить понравившийся товар'''
     db_sess = db_session.create_session()
     like = db_sess.query(Likes).filter(Likes.id == id, Likes.user_id == current_user.id).first()
     db_sess.delete(like)
@@ -279,6 +295,7 @@ def delete_likes(id):
 @app.route('/delete_shop_cart/<int:id>', methods=['GET', 'POST'])
 @login_required
 def delete_cart(id):
+    '''удалить товар из корзины'''
     db_sess = db_session.create_session()
     carts = db_sess.query(Cart).filter(Cart.id == id, Cart.user_id == current_user.id).first()
     db_sess.delete(carts)
